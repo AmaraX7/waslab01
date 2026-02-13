@@ -41,14 +41,22 @@ public class WoTServlet extends HttpServlet {
         String author = request.getParameter("author");
         String tweetText = request.getParameter("tweet_text");
 
-
+        long tweetId = 0;
         try {
-            tweetDAO.insertTweet(author, tweetText);
+            tweetId = tweetDAO.insertTweet(author, tweetText);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        response.sendRedirect(request.getContextPath());
+        String header= request.getHeader("Accept");
+
+        if ("text/plain".equals(header)) {
+            response.setContentType("text/plain");
+            PrintWriter out = response.getWriter();
+            out.print(tweetId);
+        } else {
+            response.sendRedirect(request.getContextPath());
+        }
     }
 
     private void printHTMLresults(HttpServletResponse response, List<Tweet> tweets) throws IOException {
