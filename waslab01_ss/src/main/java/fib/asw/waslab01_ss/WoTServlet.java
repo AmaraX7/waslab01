@@ -1,6 +1,7 @@
 package fib.asw.waslab01_ss;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.List;
 import java.util.Locale;
@@ -37,7 +38,15 @@ public class WoTServlet extends HttpServlet {
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-        // This method does NOTHING but redirect to the main page
+        String author = request.getParameter("author");
+        String tweetText = request.getParameter("tweet_text");
+
+
+        try {
+            tweetDAO.insertTweet(author, tweetText);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 
         response.sendRedirect(request.getContextPath());
     }
