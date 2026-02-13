@@ -88,8 +88,6 @@ public class WoTServlet extends HttpServlet {
 
         PrintWriter out = response.getWriter();
 
-        out.println(tweets.size());
-
         for(Tweet tweet : tweets) {
             out.println(tweet.getCreated_at() + " (tweet.id = " + tweet.getTwid() + "): "
                     + tweet.getAuthor() + " wrote \"" + tweet.getText() + "\"");
