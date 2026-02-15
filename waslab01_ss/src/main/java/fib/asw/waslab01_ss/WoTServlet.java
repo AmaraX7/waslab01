@@ -38,6 +38,39 @@ public class WoTServlet extends HttpServlet {
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
+        String tweet_param = request.getParameter("tweet_id");
+
+        if (tweet_param != null) {
+            try {
+                int tweet_id = Integer.parseInt(tweet_param);
+
+                if (canDeleteTweet(request, tweet_id)) {
+                    tweetDAO.deleteTweet(tweet_id);
+
+                    Cookie cookie = new Cookie("tweet_" + tweet_id, "");
+                    cookie.setMaxAge(0);
+                    response.addCookie(cookie);
+
+                    String req = request.getHeader("Accept");
+
+                    if ("text/plain".equals(req)) {
+                        response.setContentType("text/plain");;
+                        PrintWriter out = response.getWriter();
+                        out.print("Tweet " + tweet_id + " deleted");
+
+                    } else {
+                        response.sendRedirect(request.getContextPath());
+                    }
+                } else {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "You cannot delete this tweet");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid tweet ID");
+                return;
+            }
+        }
+
         String author = request.getParameter("author");
         String tweetText = request.getParameter("tweet_text");
 
@@ -58,6 +91,7 @@ public class WoTServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath());
         }
     }
+
 
     private void printHTMLresults(HttpServletResponse response, List<Tweet> tweets) throws IOException {
         DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.FULL, currentLocale);

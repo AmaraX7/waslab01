@@ -11,10 +11,29 @@ public class SimpleFluentClient {
 
 	public static void main(String[] args) throws Exception {
 
+		//plo guARDO en una variable para borrar el tweet luego, esta petición me devolverá el id del tweet
+		String tweet_id = Request.post(URI)
+				.bodyForm(Form.form()
+						.add("author", "muha")
+						.add("tweet_text", "bla")
+						.build())
+				.addHeader("Accept", "text/plain")
+				.execute()
+				.returnContent()
+				.asString();
 
-		System.out.println(Request.post(URI).bodyForm(Form.form().add("author", "muha").add("tweet_text", "bla").build()).addHeader("Accept", "text/plain").execute().returnContent());
+		System.out.println(tweet_id);
 
 		System.out.println(Request.get(URI).addHeader("Accept", "text/plain").execute().returnContent());
+
+		System.out.println(Request.post(URI)
+				.bodyForm(Form.form()
+						.add("tweet_id", tweet_id)
+						.build())
+				.addHeader("Accept", "text/plain")
+				.execute()
+				.returnContent());
+
 
 	}
 }
