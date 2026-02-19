@@ -1,6 +1,8 @@
 package fib.asw.waslab01_ss;
 
 import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.List;
@@ -36,7 +38,26 @@ public class WoTServlet extends HttpServlet {
 
 
     }
+    private String generateHash(long tweetId) {
+        try {
+            String data = tweetId + SECRET_SALT;
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(data.getBytes("UTF-8"));
 
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     private boolean canDeleteTweet(HttpServletRequest request, long tweetId) {
         Cookie[] cookies = request.getCookies();
@@ -44,7 +65,7 @@ public class WoTServlet extends HttpServlet {
             return false;
         }
 
-        String expectedHash = " "; // funcion q genera hash
+        String expectedHash = generateHash(tweetId);
         String cookieName = "tweet_" + tweetId;
 
         for (Cookie cookie : cookies) {
@@ -88,31 +109,31 @@ public class WoTServlet extends HttpServlet {
                 return;
             }
         }
-     else {
-        String author = request.getParameter("author");
-        String tweetText = request.getParameter("tweet_text");
+        else {
+            String author = request.getParameter("author");
+            String tweetText = request.getParameter("tweet_text");
 
-        long tweetId = 0;
-        try {
-            tweetId = tweetDAO.insertTweet(author, tweetText);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            long tweetId = 0;
+            try {
+                tweetId = tweetDAO.insertTweet(author, tweetText);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+            String hash = generateHash(tweetId);
+            Cookie cookie = new Cookie("tweet_" + tweetId, hash);
+            response.addCookie(cookie);
+
+            String header = request.getHeader("Accept");
+
+            if ("text/plain".equals(header)) {
+                response.setContentType("text/plain");
+                PrintWriter out = response.getWriter();
+                out.print(tweetId);
+            } else {
+                response.sendRedirect(request.getContextPath());
+            }
         }
-
-        String hash = ""; // funcion q genera hash
-        Cookie cookie = new Cookie("tweet_" + tweetId, hash);
-        response.addCookie(cookie);
-
-        String header = request.getHeader("Accept");
-
-        if ("text/plain".equals(header)) {
-            response.setContentType("text/plain");
-            PrintWriter out = response.getWriter();
-            out.print(tweetId);
-        } else {
-            response.sendRedirect(request.getContextPath());
-        }
-    }
     }
 
 
