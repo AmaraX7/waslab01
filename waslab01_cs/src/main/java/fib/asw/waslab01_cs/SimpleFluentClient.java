@@ -22,7 +22,6 @@ public class SimpleFluentClient {
 				.returnContent()
 				.asString();
 
-		System.out.println(tweet_id);
 
 		System.out.println(Request.get(URI).addHeader("Accept", "text/plain").execute().returnContent());
 
@@ -33,7 +32,6 @@ public class SimpleFluentClient {
 				.addHeader("Accept", "text/plain")
 				.execute()
 				.returnContent());
-
 
 	}
 }

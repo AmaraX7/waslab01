@@ -16,6 +16,7 @@ public class WoTServlet extends HttpServlet {
 
     private TweetDAO tweetDAO;
     private final Locale currentLocale = Locale.forLanguageTag("en");
+    private static final String SECRET_SALT = "asw_lab_1";
 
     public void init() {
         tweetDAO = new TweetDAO((java.sql.Connection) this.getServletContext().getAttribute("connection"));
@@ -30,12 +31,29 @@ public class WoTServlet extends HttpServlet {
         if (req.equals("text/plain")) {
             printPLAINresult(response, tweets);
         } else {
-            printHTMLresults(response, tweets);
+            printHTMLresults(response, tweets, request);
         }
 
 
     }
 
+
+    private boolean canDeleteTweet(HttpServletRequest request, long tweetId) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return false;
+        }
+
+        String expectedHash = " "; // funcion q genera hash
+        String cookieName = "tweet_" + tweetId;
+
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals(cookieName) && cookie.getValue().equals(expectedHash)) {
+                return true;
+            }
+        }
+        return false;
+    }
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String tweet_param = request.getParameter("tweet_id");
@@ -70,7 +88,7 @@ public class WoTServlet extends HttpServlet {
                 return;
             }
         }
-
+     else {
         String author = request.getParameter("author");
         String tweetText = request.getParameter("tweet_text");
 
@@ -81,7 +99,11 @@ public class WoTServlet extends HttpServlet {
             throw new RuntimeException(e);
         }
 
-        String header= request.getHeader("Accept");
+        String hash = ""; // funcion q genera hash
+        Cookie cookie = new Cookie("tweet_" + tweetId, hash);
+        response.addCookie(cookie);
+
+        String header = request.getHeader("Accept");
 
         if ("text/plain".equals(header)) {
             response.setContentType("text/plain");
@@ -91,9 +113,10 @@ public class WoTServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath());
         }
     }
+    }
 
 
-    private void printHTMLresults(HttpServletResponse response, List<Tweet> tweets) throws IOException {
+    private void printHTMLresults(HttpServletResponse response, List<Tweet> tweets,  HttpServletRequest request) throws IOException {
         DateFormat dateFormatter = DateFormat.getDateInstance(DateFormat.FULL, currentLocale);
         DateFormat timeFormatter = DateFormat.getTimeInstance(DateFormat.DEFAULT, currentLocale);
         response.setContentType("text/html");
@@ -124,8 +147,18 @@ public class WoTServlet extends HttpServlet {
                 out.println("<br><h3>...... " + messDate + "</h3>");
                 currentDate = messDate;
             }
+
+
             out.println("<div class=\"wallitem\">");
-            out.println("<h4><em>" + tweet.getAuthor() + "</em> @ " + timeFormatter.format(tweet.getCreated_at()) + "</h4>");
+            out.println("<h4><em>" + tweet.getAuthor() + "</em> @ " + timeFormatter.format(tweet.getCreated_at()));
+            if (canDeleteTweet(request, tweet.getTwid())) {
+                out.println(" <form method=\"post\" style=\"display:inline;\">");
+                out.println("<input type=\"hidden\" name=\"tweet_id\" value=\"" + tweet.getTwid() + "\">");
+                out.println("<button type=\"submit\" style=\"color:red;\">[X]</button>");
+                out.println("</form>");
+            }
+
+            out.println("</h4>");
             out.println("<p>" + tweet.getText() + "</p>");
             out.println("</div>");
         }
@@ -136,8 +169,8 @@ public class WoTServlet extends HttpServlet {
     private void printPLAINresult(HttpServletResponse response, List<Tweet> tweets) throws IOException {
         response.setContentType("text/plain");
 
-
         PrintWriter out = response.getWriter();
+        out.println(tweets.size());
 
         for(Tweet tweet : tweets) {
             out.println(tweet.getCreated_at() + " (tweet.id = " + tweet.getTwid() + "): "
