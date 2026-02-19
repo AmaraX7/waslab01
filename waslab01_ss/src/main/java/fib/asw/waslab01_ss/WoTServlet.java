@@ -2,7 +2,6 @@ package fib.asw.waslab01_ss;
 
 import java.io.*;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.List;
